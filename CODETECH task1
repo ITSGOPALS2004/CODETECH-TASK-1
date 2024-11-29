@@ -1,0 +1,50 @@
+# Import necessary libraries
+import pandas as pd
+import numpy as np
+import re
+import nltk
+from nltk.corpus import stopwords
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import accuracy_score, classification_report
+
+# Download NLTK stopwords if not already downloaded
+nltk.download('stopwords')
+
+# Step 1: Load dataset (IMDB dataset)
+# For the sake of this example, assuming a CSV file with 'text' and 'sentiment' columns
+df = pd.read_csv('IMDB_reviews.csv')
+
+# Step 2: Data Preprocessing
+# Cleaning function to remove special characters, numbers, and stopwords
+def preprocess_text(text):
+    text = text.lower()  # Convert text to lowercase
+    text = re.sub(r'[^a-zA-Z\s]', '', text)  # Remove special characters and numbers
+    text = ' '.join([word for word in text.split() if word not in stopwords.words('english')])  # Remove stopwords
+    return text
+
+# Apply preprocessing to all the reviews in the dataset
+df['cleaned_text'] = df['text'].apply(preprocess_text)
+
+# Step 3: Convert text to numerical features using CountVectorizer
+vectorizer = CountVectorizer(max_features=5000)
+X = vectorizer.fit_transform(df['cleaned_text']).toarray()  # Features (word count matrix)
+y = df['sentiment'].map({'positive': 1, 'negative': 0, 'neutral': 2}).values  # Labels
+
+# Step 4: Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Step 5: Train the model using Naive Bayes Classifier
+model = MultinomialNB()
+model.fit(X_train, y_train)
+
+# Step 6: Make predictions on the test set
+y_pred = model.predict(X_test)
+
+# Step 7: Evaluate the model
+print("Accuracy Score:", accuracy_score(y_test, y_pred))
+print("Classification Report:")
+print(classification_report(y_test, y_pred, target_names=['Negative', 'Positive', 'Neutral']))
+
+pip install pandas numpy nltk scikit-learn
